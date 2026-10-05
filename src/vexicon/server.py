@@ -10,9 +10,7 @@ from vexicon.tools import TOOLS
 
 
 def build_server(settings: Settings) -> FastMCP:
-    """Migrates the keyword index before serving; Chroma opens on first use."""
-    settings.persistent_path.mkdir(parents=True, exist_ok=True)
-    settings.index_db_path.parent.mkdir(parents=True, exist_ok=True)
+    """Migrates the keyword index before serving."""
     run_migrations(settings.index_db_path)
     chroma = create_chroma_proxy(settings)
     client = HybridClient(
@@ -40,5 +38,5 @@ def build_server(settings: Settings) -> FastMCP:
 
 
 def main() -> None:
-    """Entry point for the vexicon script; stdio is the only transport."""
+    """Entry point for the vexicon script, which serves over stdio only."""
     build_server(get_settings()).run(transport="stdio")

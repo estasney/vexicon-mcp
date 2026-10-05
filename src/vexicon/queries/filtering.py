@@ -12,7 +12,7 @@ type ValueTest = Callable[[ColumnElement[object]], ColumnElement[bool]]
 
 
 def json_type_names(sample: Scalar) -> list[str]:
-    """Chroma keeps booleans, numbers, and strings apart; json_each reports which one is stored."""
+    """Returns the json_each type names that a value of sample's type is stored under."""
     if isinstance(sample, bool):
         return ["true", "false"]
     if isinstance(sample, int | float):
@@ -44,7 +44,7 @@ def scalar_list(key: str, operator: str, value: object) -> list[Scalar]:
 
 
 def has_entry(key: str, sample: Scalar, test: ValueTest) -> ColumnElement[bool]:
-    """A correlated json_each lookup; a missing key or another stored type is simply no entry."""
+    """Condition that the metadata has key with a value of sample's type that passes test."""
     entry = func.json_each(orm.Document.meta).table_valued("key", "value", "type")
     return (
         select(entry.c.value)

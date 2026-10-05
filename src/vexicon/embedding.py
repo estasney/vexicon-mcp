@@ -21,11 +21,7 @@ def is_sentence_transformer(repo: CachedRepoInfo) -> bool:
 
 
 def list_local_repo_ids() -> list[str]:
-    """Return repo_ids of sentence-transformer models cached locally.
-
-    HFEmbeddingFunction loads with local_files_only=True, so only cached repos
-    are usable as embedding models.
-    """
+    """Return repo_ids of sentence-transformer models cached locally."""
     repos = scan_cache_dir().repos
     return sorted(repo.repo_id for repo in repos if is_sentence_transformer(repo))
 
@@ -65,7 +61,7 @@ class HFEmbeddingFunction(chromadb.EmbeddingFunction[chromadb.Documents]):
         self._model = self.models[key]
 
     def max_tokens(self) -> int | None:
-        """Token budget per document; longer inputs are silently truncated."""
+        """Token budget per document. Longer inputs are silently truncated."""
         return self._model.max_seq_length
 
     def __call__(self, input: chromadb.Documents) -> chromadb.Embeddings:

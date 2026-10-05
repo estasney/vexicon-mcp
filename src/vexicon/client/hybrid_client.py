@@ -26,10 +26,11 @@ from vexicon import orm
 from vexicon.embedding import resolve_embedding_function
 from vexicon.idle_proxy import IdleUnloadingProxy
 from vexicon.queries.fusion import (
-    KeywordHit,
-    assemble_query_result,
+    Hit,
+    Ranking,
     fuse,
     group_by_phrase,
+    vector_hits,
 )
 from vexicon.queries.matching import match_expression
 from vexicon.queries.selects import collection_id_select, keyword_search_select
@@ -333,9 +334,8 @@ class HybridClient:
         n_results: int = 10,
         where: Where | None = None,
         where_document: WhereDocument | None = None,
-        include: Include | None = None,
-    ) -> QueryResult:
-        included: Include = include or ["metadatas", "documents", "distances"]
+    ) -> list[Hit]:
+        """Fuses every query text's vector and keyword rankings into one list of hits."""
 
         def query_chroma(client: ClientAPI) -> QueryResult:
             return client.get_collection(name=collection_name).query(
@@ -343,14 +343,15 @@ class HybridClient:
                 n_results=n_results,
                 where=where,
                 where_document=where_document,
-                include=included,
+                include=["documents", "metadatas"],
             )
 
-        async def query_vector() -> QueryResult:
+        async def query_vector() -> list[list[Hit]]:
             async with self.chroma.lease() as client:
-                return await asyncio.to_thread(query_chroma, client)
+                result = await asyncio.to_thread(query_chroma, client)
+            return vector_hits(result)
 
-        async def query_sql() -> list[list[KeywordHit]]:
+        async def query_sql() -> list[list[Hit]]:
             expressions = [
                 (index, expression)
                 for index, phrase in enumerate(query_texts)
@@ -372,17 +373,11 @@ class HybridClient:
                 return group_by_phrase(result.tuples().all(), len(query_texts))
 
         vector, keyword = await asyncio.gather(query_vector(), query_sql())
-        fused = [
-            fuse(
-                vector_ids,
-                [hit.chroma_id for hit in hits],
-                self.vector_weight,
-                self.keyword_weight,
-                self.rrf_rank_offset,
-            )[:n_results]
-            for vector_ids, hits in zip(vector["ids"], keyword, strict=True)
+        rankings = [
+            *(Ranking(hits, self.vector_weight) for hits in vector),
+            *(Ranking(hits, self.keyword_weight) for hits in keyword),
         ]
-        return assemble_query_result(vector, keyword, fused, included)
+        return fuse(rankings, self.rrf_rank_offset)[:n_results]
 
     async def peek(self, collection_name: str, limit: int = 10) -> GetResult:
         def fn(client: ClientAPI) -> GetResult:

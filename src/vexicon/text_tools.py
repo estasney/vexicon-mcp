@@ -46,7 +46,7 @@ def render_cell(value: object) -> str:
 def render_table(
     model: type[BaseModel], rows: Iterable[BaseModel], max_width: int = 60
 ) -> str:
-    """Columns padded to their widest cell, two spaces apart, like ``docker ps``; cells wider than max_width are cut."""
+    """Columns padded to their widest cell, two spaces apart, like ``docker ps``. Cells wider than max_width are cut."""
     columns = list(model.model_json_schema(mode="serialization")["properties"])
     grid = [columns]
     for row in rows:
@@ -75,7 +75,7 @@ def render_records(records: Iterable[BaseModel]) -> str:
 
 
 def render_record(record: BaseModel) -> str:
-    """One ``field: value`` line per field; nested models and multi-line text go indented under the field name."""
+    """One ``field: value`` line per field. Nested models and multi-line text go indented under the field name."""
     lines: list[str] = []
     dumped = record.model_dump(mode="json")
     for field in dumped:
@@ -95,7 +95,7 @@ def render_record(record: BaseModel) -> str:
 
 
 class TextTool(FunctionTool):
-    """Sends the validated result as text content only; no output schema is declared."""
+    """Sends the validated result as text content only, without declaring an output schema."""
 
     def render(self, value: Any) -> str:
         raise NotImplementedError

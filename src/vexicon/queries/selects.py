@@ -34,7 +34,7 @@ def keyword_search_select(
     where: Where | None = None,
     where_document: WhereDocument | None = None,
 ) -> CompoundSelect[KeywordRow]:
-    """One statement over every phrase: a UNION ALL of per-phrase ranked subqueries tagged by phrase index."""
+    """Selects up to limit FTS5 matches per phrase, ranked by bm25 and tagged with the phrase index."""
     score = func.bm25(fts_match_target).label("score")
     filters: list[ColumnElement[bool]] = [orm.Document.collection_id == collection_id]
     if where is not None:

@@ -11,10 +11,8 @@ from vexicon.models.base import SpaceName
 from vexicon.models.entries import (
     Entry,
     NewEntry,
-    SearchResult,
     UpdateEntriesInput,
     entries_from,
-    search_results_from,
 )
 from vexicon.text_tools import records_tool
 
@@ -44,21 +42,23 @@ async def search(
     queries: list[str],
     space: SpaceName,
     ctx: Context,
-    limit: Annotated[int, Field(description="Maximum entries per query.")] = 5,
+    limit: Annotated[int, Field(description="Maximum entries returned.")] = 5,
     where: dict[str, object] | None = WhereField,
     where_text: dict[str, object] | None = WhereTextField,
     client: HybridClient = GetClientDep,
-) -> list[SearchResult]:
-    """Search a space for each query."""
-    result = await client.query(
+) -> list[Entry]:
+    """Search a space and return one ranked list of entries for all queries."""
+    hits = await client.query(
         space,
         query_texts=queries,
         n_results=limit,
         where=where,
         where_document=where_text,
-        include=["documents", "metadatas"],
     )
-    return search_results_from(queries, result)
+    return [
+        Entry(id=hit.chroma_id, text=hit.document, metadata_raw=hit.metadata)
+        for hit in hits
+    ]
 
 
 @records_tool

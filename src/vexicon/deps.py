@@ -59,7 +59,7 @@ def get_hybrid_client() -> "HybridClient":
 
 @contextmanager
 def borrow_hybrid_client() -> Generator["HybridClient"]:
-    """The injector enters whatever a dependency returns, so a plain wrapper keeps the client open."""
+    """Provides the server's hybrid client to a tool without closing it when the call ends."""
     yield get_hybrid_client()
 
 

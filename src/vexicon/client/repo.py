@@ -10,10 +10,11 @@ from chromadb.api.types import (
     IDs,
     Include,
     Metadatas,
-    QueryResult,
     Where,
     WhereDocument,
 )
+
+from vexicon.queries.fusion import Hit
 
 
 class ChromaClientProtocol(Protocol):
@@ -28,24 +29,18 @@ class ChromaClientProtocol(Protocol):
         name: str,
         repo_id: str | None = None,
         metadata: CollectionMetadata | None = None,
-    ) -> Collection:
-        """Undo deletes the collection."""
-        ...
+    ) -> Collection: ...
 
     async def get_collection(self, name: str) -> Collection: ...
 
-    async def delete_collection(self, name: str) -> None:
-        """Undo recreates the collection and re-adds the captured documents with embeddings."""
-        ...
+    async def delete_collection(self, name: str) -> None: ...
 
     async def modify(
         self,
         collection_name: str,
         name: str | None = None,
         metadata: CollectionMetadata | None = None,
-    ) -> None:
-        """Undo applies the inverse modify."""
-        ...
+    ) -> None: ...
 
     async def peek(self, collection_name: str, limit: int = 10) -> GetResult: ...
 
@@ -58,7 +53,7 @@ class ChromaClientProtocol(Protocol):
         documents: Documents,
         metadatas: Metadatas | None = None,
     ) -> None:
-        """SQLite receives the state read back from Chroma; undo deletes the ids."""
+        """SQLite receives the state read back from Chroma."""
         ...
 
     async def update(
@@ -69,12 +64,10 @@ class ChromaClientProtocol(Protocol):
         metadatas: Metadatas | None = None,
         documents: Documents | None = None,
     ) -> None:
-        """SQLite receives the state read back from Chroma; undo restores the captured prior state."""
+        """SQLite receives the state read back from Chroma."""
         ...
 
-    async def delete(self, collection_name: str, ids: IDs) -> None:
-        """Undo re-adds the captured rows with embeddings."""
-        ...
+    async def delete(self, collection_name: str, ids: IDs) -> None: ...
 
     async def sync(self) -> None: ...
 
@@ -96,7 +89,6 @@ class ChromaClientProtocol(Protocol):
         n_results: int = 10,
         where: Where | None = None,
         where_document: WhereDocument | None = None,
-        include: Include | None = None,
-    ) -> QueryResult:
-        """Fuses vector and keyword rankings per phrase; keyword-only hits carry None distances."""
+    ) -> list[Hit]:
+        """Fuses every query text's vector and keyword rankings into one list of hits."""
         ...

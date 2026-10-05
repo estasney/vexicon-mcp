@@ -38,5 +38,5 @@ def migration_config(db_path: Path) -> Config:
 
 
 def run_migrations(db_path: Path) -> None:
-    """Blocking; call before the event loop starts."""
+    """Upgrades the keyword index database at db_path to the newest schema, creating the file when it is missing."""
     command.upgrade(migration_config(db_path), "head")

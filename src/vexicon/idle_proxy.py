@@ -4,10 +4,10 @@ from contextlib import asynccontextmanager
 
 
 class IdleUnloadingProxy[T]:
-    """Load a resource on first lease; unload it after idle_seconds without leases.
+    """Load a resource on first lease and unload it after idle_seconds without leases.
 
     Access the resource only through `lease()`. The resource is not unloaded
-    while a lease is held; the idle clock starts when the last lease is released.
+    while a lease is held. The idle clock starts when the last lease is released.
     Loading and unloading run in a worker thread, serialized by a lock, so
     concurrent first callers trigger exactly one load and a reload cannot
     overlap an in-progress unload.
@@ -76,7 +76,7 @@ class IdleUnloadingProxy[T]:
             await self.release_resource_locked()
 
     async def release_resource_locked(self) -> None:
-        """Unload and drop the resource, then reclaim its memory; caller must hold the lock."""
+        """Unload and drop the resource, then reclaim its memory. The caller must hold the lock."""
         if self.resource is None:
             return
         resource = self.resource

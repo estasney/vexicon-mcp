@@ -31,9 +31,8 @@ def read_space_info(client: ClientAPI, name: str) -> str:
 class SpacesProvider(Provider):
     """Publishes every live space as a readable resource.
 
-    Overrides dynamic listing so `resources/list` always reflects the current
-    set of spaces without upfront registration. Clients cache that list,
-    so tools that change the set must call `ctx.session.send_resource_list_changed`.
+    `resources/list` reflects the current set of spaces. Tools that add,
+    rename, or remove a space must call `ctx.session.send_resource_list_changed`.
     Reading a space resource returns its name, id, metadata, and count.
     """
 

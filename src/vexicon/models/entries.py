@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from chromadb import GetResult
-from chromadb.api.types import Metadata, QueryResult
+from chromadb.api.types import Metadata
 from pydantic import BaseModel, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
@@ -64,32 +64,4 @@ def entries_from(result: GetResult) -> list[Entry]:
             metadata_raw=metadatas[index] if index < len(metadatas) else None,
         )
         for index, entry_id in enumerate(result["ids"])
-    ]
-
-
-class SearchResult(BaseModel):
-    query: str = Field(description="The query text these entries answer.")
-    entries: list[Entry] = Field(description="Entries ranked by fused score.")
-
-
-def search_results_from(queries: list[str], result: QueryResult) -> list[SearchResult]:
-    documents = result.get("documents") or []
-    metadatas = result.get("metadatas") or []
-    return [
-        SearchResult(
-            query=query,
-            entries=[
-                Entry(
-                    id=entry_id,
-                    text=documents[phrase][index] if phrase < len(documents) else None,
-                    metadata_raw=metadatas[phrase][index]
-                    if phrase < len(metadatas)
-                    else None,
-                )
-                for index, entry_id in enumerate(phrase_ids)
-            ],
-        )
-        for phrase, (query, phrase_ids) in enumerate(
-            zip(queries, result["ids"], strict=True)
-        )
     ]

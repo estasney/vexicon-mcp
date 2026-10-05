@@ -12,16 +12,32 @@ class Device(StrEnum):
     cuda = "cuda"
 
 
+def default_persistent_path() -> Path:
+    """Returns ~/.vexicon/chroma, creating the directory when it is missing."""
+    path = Path.home() / ".vexicon" / "chroma"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def default_index_db_path() -> Path:
+    """Returns ~/.vexicon/hybrid.db, creating ~/.vexicon when it is missing."""
+    path = Path.home() / ".vexicon" / "hybrid.db"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 class Settings(BaseSettings):
     """Read from VEXICON_* environment variables."""
 
     model_config = SettingsConfigDict(env_prefix="VEXICON_", extra="ignore")
 
     persistent_path: Path = Field(
-        description="Directory where the PersistentClient stores its DB."
+        default_factory=default_persistent_path,
+        description="Directory where the PersistentClient stores its DB.",
     )
     index_db_path: Path = Field(
-        description="SQLite database file holding the keyword index."
+        default_factory=default_index_db_path,
+        description="SQLite database file holding the keyword index.",
     )
     vector_weight: float = Field(
         default=1.0, ge=0, description="Weight of the vector ranking in fusion."
@@ -45,4 +61,4 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    return Settings()  # pyright: ignore[reportCallIssue]
+    return Settings()
