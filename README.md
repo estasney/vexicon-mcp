@@ -2,22 +2,61 @@
 
 ## About
 
-Knowledge store MCP Server.
+Knowledge store MCP server.
 
-Provides an RRF implementation using SQLite. Tunable via settings.
+Notes and reference material live in named spaces backed by Chroma
+collections. Each space also has a SQLite FTS5 keyword index, and searches
+fuse the vector and keyword rankings with reciprocal rank fusion, tunable
+through settings.
 
-Introduces some opinionated defaults
+vexicon ships opinionated defaults, listed under Defaults below.
 
+Run the server over stdio with `uvx vexicon`.
 
-Notes and reference material live in
-named spaces backed by Chroma collections with a SQLite FTS5 keyword index;
-searches fuse the vector and keyword rankings by reciprocal rank fusion.
+## Add to an MCP client
 
-Run the server over stdio with `uv run vexicon`.
+The first launch downloads vexicon's dependencies, which can take longer than
+a client's startup timeout. Each client below shows how to raise it.
 
-Settings are read from `VEXICON_*` environment variables; see
-`src/vexicon/settings.py`. Data is stored under `~/.vexicon` unless
-`VEXICON_PERSISTENT_PATH` and `VEXICON_INDEX_DB_PATH` say otherwise.
+### Claude Code
+
+```sh
+claude mcp add --scope user vexicon -- uvx vexicon
+```
+
+Pass settings with `-e`:
+
+```sh
+claude mcp add --scope user vexicon -e VEXICON_DEVICE=cpu -- uvx vexicon
+```
+
+Claude Code's startup timeout is 30 seconds. Raise it with `MCP_TIMEOUT` in
+milliseconds:
+
+```sh
+MCP_TIMEOUT=120000 claude
+```
+
+### Codex
+
+```sh
+codex mcp add vexicon -- uvx vexicon
+```
+
+Pass settings with `--env`:
+
+```sh
+codex mcp add vexicon --env VEXICON_DEVICE=cpu -- uvx vexicon
+```
+
+Codex's startup timeout is 10 seconds. Raise it in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.vexicon]
+command = "uvx"
+args = ["vexicon"]
+startup_timeout_sec = 120
+```
 
 ## Settings
 
