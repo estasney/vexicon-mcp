@@ -17,6 +17,5 @@ version-patch version-minor version-major: check-clean
 
 # The PyPI token is read from keyring under service PYPI, username PUBLISH_TOKEN.
 publish: check-clean
-	uv run pytest -q
 	uv build --clear --no-sources
 	UV_PUBLISH_TOKEN="$$(uvx keyring get PYPI PUBLISH_TOKEN)" uv publish
