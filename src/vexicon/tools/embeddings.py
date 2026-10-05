@@ -4,7 +4,6 @@ from typing import Annotated
 from fastmcp.server.context import Context
 from fastmcp.tools import ToolResult
 from pydantic import Field
-from sentence_transformers import SentenceTransformer
 
 from vexicon.embedding import list_hub_models, list_local_repo_ids
 from vexicon.models.embeddings import EmbeddingModel, HubRepoId
@@ -34,6 +33,8 @@ async def download_embedding_model(repo_id: HubRepoId, ctx: Context) -> ToolResu
     """Download an embedding model so that create_space can use it."""
     if repo_id in await asyncio.to_thread(list_local_repo_ids):
         return ToolResult(content=f"Model {repo_id!r} is already downloaded.")
+    from sentence_transformers import SentenceTransformer
+
     await asyncio.to_thread(SentenceTransformer, repo_id, local_files_only=False)
     return ToolResult(content=f"Downloaded model {repo_id!r}.")
 

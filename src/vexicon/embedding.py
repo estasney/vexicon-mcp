@@ -1,17 +1,18 @@
 import gc
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import chromadb
 import numpy as np
-import torch
 from chromadb.utils.embedding_functions import (
     DefaultEmbeddingFunction,
     register_embedding_function,  # pyright: ignore[reportUnknownVariableType]
 )
 from huggingface_hub import CachedRepoInfo, HfApi, ModelInfo, scan_cache_dir
-from sentence_transformers import SentenceTransformer
 
 from vexicon.settings import Device
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 
 def is_sentence_transformer(repo: CachedRepoInfo) -> bool:
@@ -38,8 +39,8 @@ def list_hub_models(limit: int) -> list[ModelInfo]:
 
 @register_embedding_function
 class HFEmbeddingFunction(chromadb.EmbeddingFunction[chromadb.Documents]):
-    _model: SentenceTransformer
-    models: ClassVar[dict[tuple[str, str | None], SentenceTransformer]] = {}
+    _model: "SentenceTransformer"
+    models: ClassVar[dict[tuple[str, str | None], "SentenceTransformer"]] = {}
 
     def __init__(
         self,
@@ -55,6 +56,8 @@ class HFEmbeddingFunction(chromadb.EmbeddingFunction[chromadb.Documents]):
         self.normalize_embeddings = normalize_embeddings
         key = (repo_id, device)
         if key not in self.models:
+            from sentence_transformers import SentenceTransformer
+
             self.models[key] = SentenceTransformer(
                 repo_id, device=device, local_files_only=True
             )
@@ -110,6 +113,10 @@ class HFEmbeddingFunction(chromadb.EmbeddingFunction[chromadb.Documents]):
 
 def release_embedding_models() -> None:
     """Drop cached SentenceTransformer instances and return their memory to the allocator."""
+    if not HFEmbeddingFunction.models:
+        return
+    import torch
+
     HFEmbeddingFunction.models.clear()
     gc.collect()
     if torch.cuda.is_available():
