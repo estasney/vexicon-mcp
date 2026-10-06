@@ -67,9 +67,12 @@ class HybridClient:
         readme: str | None = None,
         embedding_repo_id: str | None = None,
         metadata: Metadata | None = None,
+        batch_size: int = 32,
     ) -> SpaceSummary:
         return self.run(
-            self.inner.create_space(name, readme, embedding_repo_id, metadata)
+            self.inner.create_space(
+                name, readme, embedding_repo_id, metadata, batch_size
+            )
         )
 
     def get_space(self, name: str) -> SpaceInfo:

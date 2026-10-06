@@ -156,10 +156,11 @@ class AsyncHybridClient:
         readme: str | None = None,
         embedding_repo_id: str | None = None,
         metadata: Metadata | None = None,
+        batch_size: int = 32,
     ) -> SpaceSummary:
         def write_chroma(client: ClientAPI) -> Collection:
             embedding_function, max_tokens = resolve_embedding_function(
-                embedding_repo_id, self.device
+                embedding_repo_id, self.device, batch_size
             )
             return client.create_collection(
                 name=name,

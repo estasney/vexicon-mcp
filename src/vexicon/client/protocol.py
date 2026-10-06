@@ -16,6 +16,7 @@ class HybridClientProtocol(Protocol):
         readme: str | None = None,
         embedding_repo_id: str | None = None,
         metadata: Metadata | None = None,
+        batch_size: int = 32,
     ) -> SpaceSummary: ...
 
     async def get_space(self, name: str) -> SpaceInfo: ...

@@ -106,13 +106,15 @@ def release_embedding_models() -> None:
 
 
 def resolve_embedding_function(
-    repo_id: str | None, device: Device
+    repo_id: str | None, device: Device, batch_size: int
 ) -> tuple[chromadb.EmbeddingFunction[chromadb.Documents], int | None]:
     """Build the embedding function for repo_id (or Chroma's default) with its per-document token budget."""
     if repo_id is None:
         default = DefaultEmbeddingFunction()
         return default, default.max_tokens()
     hf = HFEmbeddingFunction(
-        repo_id=repo_id, device=None if device is Device.auto else device
+        repo_id=repo_id,
+        device=None if device is Device.auto else device,
+        batch_size=batch_size,
     )
     return hf, hf.max_tokens()

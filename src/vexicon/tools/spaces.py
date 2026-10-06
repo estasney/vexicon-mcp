@@ -32,11 +32,18 @@ async def create_space(
     metadata: Annotated[
         SpaceMetadata | None, Field(description="Other space metadata.")
     ] = None,
+    batch_size: Annotated[
+        int, Field(ge=1, description="Embedding model batch size.")
+    ] = 32,
     client: HybridClientProtocol = GetClientDep,
 ) -> ToolResult:
     """Create a space."""
     await client.create_space(
-        space, readme=readme, embedding_repo_id=embedding_repo_id, metadata=metadata
+        space,
+        readme=readme,
+        embedding_repo_id=embedding_repo_id,
+        metadata=metadata,
+        batch_size=batch_size,
     )
     await ctx.session.send_resource_list_changed()
     return ToolResult(content=f"Created space {space!r}.")
