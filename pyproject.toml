@@ -76,11 +76,13 @@ reportUnusedParameter = false
 strictDictionaryInference = true
 strictListInference = true
 strictSetInference = true
-
 [tool.ruff.lint]
 select = [
     "A",
-    "ANN",
+    "ANN001",
+    "ANN201",
+    "ANN205",
+    "ANN206",
     "ASYNC",
     "B",
     "BLE",
@@ -118,10 +120,6 @@ select = [
 ]
 ignore = [
     "A002",
-    "ANN002",
-    "ANN003",
-    "ANN202",
-    "ANN401",
     "ASYNC119",
     "N818",
     "PLR0904",
@@ -134,12 +132,16 @@ ignore = [
     "PLW0603",
     "RET504",
     "RUF001",
+    "RUF077",
     "RUF105",
     "RUF106",
     "RUF201",
     "TRY003",
+    "UP048",
     "UP051",
+    "UP052",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["I"]
+"tests/**" = ["INP001"]
