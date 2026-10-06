@@ -1,4 +1,3 @@
-from chromadb.api.types import Where, WhereDocument
 from sqlalchemy import (
     ColumnElement,
     CompoundSelect,
@@ -15,9 +14,10 @@ from sqlalchemy import (
 )
 
 from vexicon import orm
+from vexicon.models.base import Filter, Metadata
 from vexicon.queries.filtering import where_condition, where_document_condition
 
-type KeywordRow = tuple[int, str, str, orm.Json | None, float]
+type KeywordRow = tuple[int, str, str, Metadata | None, float]
 
 documents_fts = table("documents_fts", column("rowid", Integer))
 fts_match_target = literal_column("documents_fts", type_=Text)
@@ -31,8 +31,8 @@ def keyword_search_select(
     collection_id: int,
     expressions: list[tuple[int, str]],
     limit: int,
-    where: Where | None = None,
-    where_document: WhereDocument | None = None,
+    where: Filter | None = None,
+    where_document: Filter | None = None,
 ) -> CompoundSelect[KeywordRow]:
     """Selects up to limit FTS5 matches per phrase, ranked by bm25 and tagged with the phrase index."""
     score = func.bm25(fts_match_target).label("score")

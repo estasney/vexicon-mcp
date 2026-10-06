@@ -1,9 +1,11 @@
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import cast
 
-from chromadb.api.types import Metadata, QueryResult
+from chromadb.api.types import QueryResult
 
+from vexicon.models.base import Metadata
 from vexicon.queries.selects import KeywordRow
 
 
@@ -14,9 +16,7 @@ class Hit:
     metadata: Metadata | None
 
 
-def group_by_phrase(
-    rows: Sequence[KeywordRow], phrase_count: int
-) -> list[list[Hit]]:
+def group_by_phrase(rows: Sequence[KeywordRow], phrase_count: int) -> list[list[Hit]]:
     grouped: list[list[Hit]] = [[] for _ in range(phrase_count)]
     for phrase_index, chroma_id, document, metadata, _ in rows:
         grouped[phrase_index].append(
@@ -33,7 +33,11 @@ def vector_hits(result: QueryResult) -> list[list[Hit]]:
         raise ValueError("Chroma result lacks documents or metadatas")
     return [
         [
-            Hit(chroma_id=chroma_id, document=document, metadata=metadata)
+            Hit(
+                chroma_id=chroma_id,
+                document=document,
+                metadata=cast("Metadata | None", metadata),
+            )
             for chroma_id, document, metadata in zip(
                 ids, query_documents, query_metadatas, strict=True
             )

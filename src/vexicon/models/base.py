@@ -6,12 +6,17 @@ from pydantic import Field, GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
 
+type Scalar = str | int | float | bool
+type MetadataValue = Scalar | list[Scalar] | None
+type Metadata = dict[str, MetadataValue]
+type Filter = dict[str, object]
+
 
 @dataclass(frozen=True)
 class ForbiddenKeys:
     keys: frozenset[str]
 
-    def reject_forbidden(self, value: dict[str, object]) -> dict[str, object]:
+    def reject_forbidden(self, value: Metadata) -> Metadata:
         found = self.keys & value.keys()
         if found:
             raise ValueError(f"Forbidden keys: {', '.join(sorted(found))}")

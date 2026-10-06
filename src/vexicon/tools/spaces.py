@@ -4,13 +4,12 @@ from fastmcp.server.context import Context
 from fastmcp.tools import ToolResult
 from pydantic import Field
 
-from vexicon.client.hybrid_client import HybridClient
+from vexicon.client import HybridClientProtocol
 from vexicon.deps import GetClientDep
 from vexicon.models.base import Readme, SpaceName
 from vexicon.models.embeddings import EmbeddingRepoId
-from vexicon.models.entries import entries_from
-from vexicon.models.spaces import SpaceInfo, SpaceMetadata, SpaceSummary
-from vexicon.text_tools import record_tool, table_tool
+from vexicon.models.spaces import SpaceDescription, SpaceMetadata, SpaceSummary
+from vexicon.text_tools import plain_tool, record_tool, table_tool
 
 
 @table_tool
@@ -18,13 +17,13 @@ async def list_spaces(
     ctx: Context,
     limit: int | None = None,
     offset: int | None = None,
-    client: HybridClient = GetClientDep,
+    client: HybridClientProtocol = GetClientDep,
 ) -> list[SpaceSummary]:
     """List spaces with their readme and embedding model."""
-    cols = await client.list_collections(limit=limit, offset=offset)
-    return [SpaceSummary(name=c.name, metadata_raw=c.metadata) for c in cols]
+    return await client.list_spaces(limit=limit, offset=offset)
 
 
+@plain_tool
 async def create_space(
     space: SpaceName,
     ctx: Context,
@@ -33,14 +32,11 @@ async def create_space(
     metadata: Annotated[
         SpaceMetadata | None, Field(description="Other space metadata.")
     ] = None,
-    client: HybridClient = GetClientDep,
+    client: HybridClientProtocol = GetClientDep,
 ) -> ToolResult:
     """Create a space."""
-    space_metadata = dict(metadata or {})
-    if readme is not None:
-        space_metadata["readme"] = readme
-    await client.create_collection(
-        name=space, repo_id=embedding_repo_id, metadata=space_metadata
+    await client.create_space(
+        space, readme=readme, embedding_repo_id=embedding_repo_id, metadata=metadata
     )
     await ctx.session.send_resource_list_changed()
     return ToolResult(content=f"Created space {space!r}.")
@@ -51,21 +47,13 @@ async def describe_space(
     space: SpaceName,
     ctx: Context,
     sample_size: int = 5,
-    client: HybridClient = GetClientDep,
-) -> SpaceInfo:
+    client: HybridClientProtocol = GetClientDep,
+) -> SpaceDescription:
     """Show a space with its entry count and first entries."""
-    col = await client.get_collection(space)
-    count = await client.count(space)
-    sample = await client.peek(space, limit=sample_size)
-    return SpaceInfo(
-        name=col.name,
-        id=str(col.id),
-        metadata_raw=col.metadata,
-        count=count,
-        sample=entries_from(sample),
-    )
+    return await client.describe_space(space, sample_size=sample_size)
 
 
+@plain_tool
 async def update_space(
     space: SpaceName,
     ctx: Context,
@@ -75,30 +63,25 @@ async def update_space(
         SpaceMetadata | None,
         Field(description="Keys to add or change where a null value removes the key."),
     ] = None,
-    client: HybridClient = GetClientDep,
+    client: HybridClientProtocol = GetClientDep,
 ) -> ToolResult:
     """Rename a space or change its readme and metadata."""
-    changes = dict(metadata or {})
-    if readme is not None:
-        changes["readme"] = readme
-    merged = None
-    if changes:
-        col = await client.get_collection(space)
-        combined = {**(col.metadata or {}), **changes}
-        merged = {key: value for key, value in combined.items() if value is not None}
-    await client.modify(space, name=new_name, metadata=merged)
+    await client.update_space(
+        space, new_name=new_name, readme=readme, metadata=metadata
+    )
     if new_name is not None:
         await ctx.session.send_resource_list_changed()
     return ToolResult(content=f"Updated space {(new_name or space)!r}.")
 
 
+@plain_tool
 async def delete_space(
     space: SpaceName,
     ctx: Context,
-    client: HybridClient = GetClientDep,
+    client: HybridClientProtocol = GetClientDep,
 ) -> ToolResult:
     """Delete a space and every entry in it."""
-    await client.delete_collection(space)
+    await client.delete_space(space)
     await ctx.session.send_resource_list_changed()
     return ToolResult(content=f"Deleted space {space!r}.")
 

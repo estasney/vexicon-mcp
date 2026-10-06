@@ -8,8 +8,6 @@ from sqlalchemy.engine.interfaces import DBAPIConnection
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.pool import ConnectionPoolEntry
 
-from vexicon.settings import Settings
-
 
 def apply_sqlite_pragmas(engine: Engine) -> None:
     def set_pragmas(
@@ -24,8 +22,8 @@ def apply_sqlite_pragmas(engine: Engine) -> None:
     event.listen(engine, "connect", set_pragmas)
 
 
-def create_index_engine(settings: Settings) -> AsyncEngine:
-    engine = create_async_engine(f"sqlite+aiosqlite:///{settings.index_db_path}")
+def create_index_engine(db_path: Path) -> AsyncEngine:
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
     apply_sqlite_pragmas(engine.sync_engine)
     return engine
 

@@ -1,15 +1,10 @@
-from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class Device(StrEnum):
-    auto = "auto"
-    cpu = "cpu"
-    cuda = "cuda"
+from vexicon.embedding import Device
 
 
 def default_persistent_path() -> Path:

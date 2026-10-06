@@ -1,11 +1,9 @@
 from datetime import UTC, datetime
 
-from chromadb import GetResult
-from chromadb.api.types import Metadata
 from pydantic import BaseModel, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
-from vexicon.models.base import SpaceName, current_epoch_second
+from vexicon.models.base import Metadata, SpaceName, current_epoch_second
 
 
 class NewEntry(BaseModel):
@@ -17,14 +15,14 @@ class NewEntry(BaseModel):
         min_length=1,
         pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$",
     )
-    meta: dict[str, object] | None = Field(default=None, description="Entry metadata.")
+    meta: Metadata | None = Field(default=None, description="Entry metadata.")
     created_at: SkipJsonSchema[int] = Field(default_factory=current_epoch_second)
 
 
 class UpdateEntriesInput(BaseModel):
     ids: list[str] = Field(description="IDs of entries to update.")
     space: SpaceName
-    metadata: list[dict[str, object]] | None = Field(
+    metadata: list[Metadata] | None = Field(
         default=None, description="New metadata per ID."
     )
     texts: list[str] | None = Field(default=None, description="New entry text per ID.")
@@ -38,10 +36,11 @@ class Entry(BaseModel):
     @computed_field(description="When the entry was stored.")
     @property
     def created(self) -> datetime | None:
-        created_at = (self.metadata_raw or {}).get("created_at")
-        if isinstance(created_at, int | float):
-            return datetime.fromtimestamp(created_at, tz=UTC)
-        return None
+        match (self.metadata_raw or {}).get("created_at"):
+            case int() | float() as created_at:
+                return datetime.fromtimestamp(created_at, tz=UTC)
+            case _:
+                return None
 
     @computed_field(description="Other entry metadata.")
     @property
@@ -52,16 +51,3 @@ class Entry(BaseModel):
             if key != "created_at"
         }
         return rest or None
-
-
-def entries_from(result: GetResult) -> list[Entry]:
-    documents = result.get("documents") or []
-    metadatas = result.get("metadatas") or []
-    return [
-        Entry(
-            id=entry_id,
-            text=documents[index] if index < len(documents) else None,
-            metadata_raw=metadatas[index] if index < len(metadatas) else None,
-        )
-        for index, entry_id in enumerate(result["ids"])
-    ]

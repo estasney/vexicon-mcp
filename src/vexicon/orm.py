@@ -9,8 +9,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-type JsonValue = str | int | float | bool | list[str | int | float | bool] | None
-type Json = dict[str, JsonValue]
+from vexicon.models.base import Metadata
 
 
 class Base(DeclarativeBase):
@@ -49,6 +48,6 @@ class Document(Base):
     )
     chroma_id: Mapped[str] = mapped_column(String(32), nullable=False)
     document: Mapped[str] = mapped_column(Text, nullable=False)
-    meta: Mapped[Json | None] = mapped_column("metadata", JSON, nullable=True)
+    meta: Mapped[Metadata | None] = mapped_column("metadata", JSON, nullable=True)
 
     collection: Mapped[Collection] = relationship(back_populates="documents")

@@ -3774,18 +3774,23 @@ dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
     { name = "chromadb" },
-    { name = "fastmcp" },
-    { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "pydantic" },
-    { name = "pydantic-settings" },
     { name = "sentence-transformers" },
     { name = "sqlalchemy" },
+]
+
+[package.optional-dependencies]
+mcp = [
+    { name = "fastmcp" },
+    { name = "huggingface-hub" },
+    { name = "pydantic-settings" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "vexicon", extra = ["mcp"] },
 ]
 
 [package.metadata]
@@ -3793,17 +3798,21 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1,<0.23.0" },
     { name = "alembic", specifier = ">=1.19.1,<2.0.0" },
     { name = "chromadb", specifier = ">=1.5.9,<2.0.0" },
-    { name = "fastmcp", specifier = ">=4.0.10,<5.0.0" },
-    { name = "huggingface-hub", specifier = ">=1.28.0,<2.0.0" },
+    { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=4.0.10,<5.0.0" },
+    { name = "huggingface-hub", marker = "extra == 'mcp'", specifier = ">=1.28.0,<2.0.0" },
     { name = "numpy", specifier = ">=2.5.2,<3.0.0" },
     { name = "pydantic", specifier = ">=2.13.4,<3.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.15.0,<3.0.0" },
+    { name = "pydantic-settings", marker = "extra == 'mcp'", specifier = ">=2.15.0,<3.0.0" },
     { name = "sentence-transformers", specifier = ">=6.0.0,<7.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.52,<3.0.0" },
 ]
+provides-extras = ["mcp"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.1.1,<10.0.0" }]
+dev = [
+    { name = "pytest", specifier = ">=9.1.1,<10.0.0" },
+    { name = "vexicon", extras = ["mcp"], editable = "." },
+]
 
 [[package]]
 name = "watchfiles"

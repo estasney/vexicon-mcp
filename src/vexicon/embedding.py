@@ -1,4 +1,5 @@
 import gc
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import chromadb
@@ -7,34 +8,15 @@ from chromadb.utils.embedding_functions import (
     DefaultEmbeddingFunction,
     register_embedding_function,  # pyright: ignore[reportUnknownVariableType]
 )
-from huggingface_hub import CachedRepoInfo, HfApi, ModelInfo, scan_cache_dir
-
-from vexicon.settings import Device
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
 
-def is_sentence_transformer(repo: CachedRepoInfo) -> bool:
-    markers = {"modules.json", "config_sentence_transformers.json"}
-    filenames = {file.file_name for rev in repo.revisions for file in rev.files}
-    return repo.repo_type == "model" and bool(filenames & markers)
-
-
-def list_local_repo_ids() -> list[str]:
-    """Return repo_ids of sentence-transformer models cached locally."""
-    repos = scan_cache_dir().repos
-    return sorted(repo.repo_id for repo in repos if is_sentence_transformer(repo))
-
-
-def list_hub_models(limit: int) -> list[ModelInfo]:
-    models = HfApi().list_models(
-        author="sentence-transformers",
-        sort="downloads",
-        limit=limit,
-        expand=["downloads"],
-    )
-    return list(models)
+class Device(StrEnum):
+    auto = "auto"
+    cpu = "cpu"
+    cuda = "cuda"
 
 
 @register_embedding_function

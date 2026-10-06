@@ -2,7 +2,7 @@
 
 ## About
 
-Knowledge store MCP server.
+Hybrid knowledge store, usable as a Python library or as an MCP server.
 
 Notes and reference material live in named spaces backed by Chroma
 collections. Each space also has a SQLite FTS5 keyword index, and searches
@@ -11,7 +11,29 @@ through settings.
 
 vexicon ships opinionated defaults, listed under Defaults below.
 
-Run the server over stdio with `uvx vexicon`.
+Run the server over stdio with `uvx "vexicon[mcp]"`.
+
+## Use as a library
+
+Install `vexicon` without extras. `HybridClient` takes the same settings as
+the server, as constructor arguments, and must be entered before use.
+Entering migrates the keyword index and rebuilds it from Chroma.
+
+```python
+from pathlib import Path
+
+from vexicon import HybridClient, NewEntry
+
+with HybridClient(Path("~/.vexicon/chroma"), Path("~/.vexicon/hybrid.db")) as client:
+    client.create_space("notes", readme="Short facts.")
+    client.add_entries("notes", [NewEntry(id="cats-purr", text="Cats purr.")])
+    for entry in client.search("notes", ["purring"], limit=5):
+        print(entry.id, entry.text)
+```
+
+`AsyncHybridClient` has the same methods as coroutines and is entered with
+`async with`. Both raise `VexiconError` subclasses for caller mistakes such
+as a duplicate entry ID or a filter Chroma would reject.
 
 ## Add to an MCP client
 
@@ -21,13 +43,13 @@ a client's startup timeout. Each client below shows how to raise it.
 ### Claude Code
 
 ```sh
-claude mcp add --scope user vexicon -- uvx vexicon
+claude mcp add --scope user vexicon -- uvx "vexicon[mcp]"
 ```
 
 Pass settings with `-e`:
 
 ```sh
-claude mcp add --scope user vexicon -e VEXICON_DEVICE=cpu -- uvx vexicon
+claude mcp add --scope user vexicon -e VEXICON_DEVICE=cpu -- uvx "vexicon[mcp]"
 ```
 
 Claude Code's startup timeout is 30 seconds. Raise it with `MCP_TIMEOUT` in
@@ -40,13 +62,13 @@ MCP_TIMEOUT=120000 claude
 ### Codex
 
 ```sh
-codex mcp add vexicon -- uvx vexicon
+codex mcp add vexicon -- uvx "vexicon[mcp]"
 ```
 
 Pass settings with `--env`:
 
 ```sh
-codex mcp add vexicon --env VEXICON_DEVICE=cpu -- uvx vexicon
+codex mcp add vexicon --env VEXICON_DEVICE=cpu -- uvx "vexicon[mcp]"
 ```
 
 Codex's startup timeout is 10 seconds. Raise it in `~/.codex/config.toml`:
@@ -54,7 +76,7 @@ Codex's startup timeout is 10 seconds. Raise it in `~/.codex/config.toml`:
 ```toml
 [mcp_servers.vexicon]
 command = "uvx"
-args = ["vexicon"]
+args = ["vexicon[mcp]"]
 startup_timeout_sec = 120
 ```
 

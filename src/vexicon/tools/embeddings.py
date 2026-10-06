@@ -3,11 +3,33 @@ from typing import Annotated
 
 from fastmcp.server.context import Context
 from fastmcp.tools import ToolResult
+from huggingface_hub import CachedRepoInfo, HfApi, ModelInfo, scan_cache_dir
 from pydantic import Field
 
-from vexicon.embedding import list_hub_models, list_local_repo_ids
 from vexicon.models.embeddings import EmbeddingModel, HubRepoId
-from vexicon.text_tools import lines_tool, table_tool
+from vexicon.text_tools import lines_tool, plain_tool, table_tool
+
+
+def is_sentence_transformer(repo: CachedRepoInfo) -> bool:
+    markers = {"modules.json", "config_sentence_transformers.json"}
+    filenames = {file.file_name for rev in repo.revisions for file in rev.files}
+    return repo.repo_type == "model" and bool(filenames & markers)
+
+
+def list_local_repo_ids() -> list[str]:
+    """Return repo_ids of sentence-transformer models cached locally."""
+    repos = scan_cache_dir().repos
+    return sorted(repo.repo_id for repo in repos if is_sentence_transformer(repo))
+
+
+def list_hub_models(limit: int) -> list[ModelInfo]:
+    models = HfApi().list_models(
+        author="sentence-transformers",
+        sort="downloads",
+        limit=limit,
+        expand=["downloads"],
+    )
+    return list(models)
 
 
 @lines_tool
@@ -29,6 +51,7 @@ async def list_hub_embedding_models(
     ]
 
 
+@plain_tool
 async def download_embedding_model(repo_id: HubRepoId, ctx: Context) -> ToolResult:
     """Download an embedding model so that create_space can use it."""
     if repo_id in await asyncio.to_thread(list_local_repo_ids):

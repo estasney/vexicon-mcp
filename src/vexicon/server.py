@@ -1,25 +1,21 @@
 from fastmcp import FastMCP
-from fastmcp.tools import Tool
 
-from vexicon.client.hybrid_client import HybridClient
-from vexicon.db import create_index_engine, run_migrations
-from vexicon.deps import create_chroma_proxy, hybrid_client_lifespan
+from vexicon.client import AsyncHybridClient
+from vexicon.deps import hybrid_client_lifespan
 from vexicon.resources import SpacesProvider
 from vexicon.settings import Settings, get_settings
 from vexicon.tools import TOOLS
 
 
 def build_server(settings: Settings) -> FastMCP:
-    """Migrates the keyword index before serving."""
-    run_migrations(settings.index_db_path)
-    chroma = create_chroma_proxy(settings)
-    client = HybridClient(
-        chroma=chroma,
-        sql_engine=create_index_engine(settings),
+    client = AsyncHybridClient(
+        settings.persistent_path,
+        settings.index_db_path,
         vector_weight=settings.vector_weight,
         keyword_weight=settings.keyword_weight,
         rrf_rank_offset=settings.rrf_rank_offset,
         device=settings.device,
+        idle_seconds=settings.idle_seconds,
     )
     mcp = FastMCP(
         "vexicon",
@@ -27,13 +23,9 @@ def build_server(settings: Settings) -> FastMCP:
         "material in named spaces for later search.",
         lifespan=hybrid_client_lifespan(client),
     )
-    tags = {"vexicon"}
     for tool in TOOLS:
-        if isinstance(tool, Tool):
-            mcp.add_tool(tool.model_copy(update={"tags": tags}))
-        else:
-            mcp.tool(tool, tags=tags)
-    mcp.add_provider(SpacesProvider(chroma))
+        mcp.add_tool(tool.model_copy(update={"tags": {"vexicon"}}))
+    mcp.add_provider(SpacesProvider(client))
     return mcp
 
 

@@ -3,9 +3,12 @@ from collections.abc import Callable, Iterable
 from textwrap import shorten
 from typing import Any, get_args, get_origin
 
+from fastmcp.exceptions import ToolError
 from fastmcp.tools import ToolResult
 from fastmcp.tools.function_tool import FunctionTool
 from pydantic import BaseModel
+
+from vexicon.client import VexiconError
 
 
 def row_model(return_type: object) -> type[BaseModel]:
@@ -94,7 +97,17 @@ def render_record(record: BaseModel) -> str:
     return "\n".join(lines)
 
 
-class TextTool(FunctionTool):
+class VexiconTool(FunctionTool):
+    """Reports a VexiconError raised by the body as the tool error message."""
+
+    async def run(self, arguments: dict[str, Any]) -> ToolResult:
+        try:
+            return await super().run(arguments)
+        except VexiconError as error:
+            raise ToolError(str(error)) from error
+
+
+class TextTool(VexiconTool):
     """Sends the validated result as text content only, without declaring an output schema."""
 
     def render(self, value: Any) -> str:
@@ -122,6 +135,10 @@ class RecordTool(TextTool):
 class RecordsTool(TextTool):
     def render(self, value: Any) -> str:
         return "\n\n".join(render_record(record) for record in value)
+
+
+def plain_tool(fn: Callable[..., Any]) -> FunctionTool:
+    return VexiconTool.from_function(fn)
 
 
 def table_tool(fn: Callable[..., Any]) -> FunctionTool:
