@@ -27,7 +27,7 @@ dependencies = [
     "numpy>=2.5.2,<3.0.0",
     "pydantic>=2.13.4,<3.0.0",
     "sentence-transformers>=6.0.0,<7.0.0",
-    "sqlalchemy>=2.0.52,<3.0.0",
+    "sqlalchemy[asyncio]>=2.0.54,<3.0.0",
 ]
 
 [project.optional-dependencies]
